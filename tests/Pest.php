@@ -1,3 +1,3 @@
 <?php
 
-pest()->in('Unit');
+pest()->in('Unit', 'Characterization', 'Conformance', 'Integration');

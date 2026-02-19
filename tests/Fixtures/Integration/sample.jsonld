@@ -1,0 +1,20 @@
+{
+    "@context": {
+        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+        "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+        "ex": "http://example.org/"
+    },
+    "@graph": [
+        {
+            "@id": "ex:Person",
+            "@type": "rdfs:Class",
+            "rdfs:label": {"@value": "Person", "@language": "en"}
+        },
+        {
+            "@id": "ex:name",
+            "@type": "rdf:Property",
+            "rdfs:label": {"@value": "name", "@language": "en"},
+            "rdfs:domain": {"@id": "ex:Person"}
+        }
+    ]
+}

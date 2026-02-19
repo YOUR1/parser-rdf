@@ -2,26 +2,33 @@
   "name": "youri/parser-rdf",
   "description": "RDF parser with RDF/XML, Turtle, JSON-LD and N-Triples support.",
   "type": "library",
-  "license": "proprietary",
+  "license": "Apache-2.0",
   "authors": [
     {
       "name": "Youri van den Bogert"
     }
   ],
+  "minimum-stability": "dev",
+  "prefer-stable": true,
   "require": {
     "php": "^8.2",
     "ext-simplexml": "*",
-    "easyrdf/easyrdf": "^1.1",
-    "ml/json-ld": "^1.2"
+    "youri/parser-core": "dev-main",
+    "youri/parser-jsonld": "dev-main",
+    "youri/parser-rdfxml": "dev-main",
+    "youri/parser-turtle": "dev-main"
   },
   "require-dev": {
     "pestphp/pest": "^3.8",
-    "illuminate/support": "^12.0"
+    "phpstan/phpstan": "^2.1"
   },
   "autoload": {
     "psr-4": {
-      "App\\": "src/"
-    }
+      "Youri\\vandenBogert\\Software\\ParserRdf\\": "src/"
+    },
+    "files": [
+      "aliases.php"
+    ]
   },
   "autoload-dev": {
     "psr-4": {
@@ -29,7 +36,8 @@
     }
   },
   "scripts": {
-    "test": "vendor/bin/pest --colors=always --coverage-clover=coverage.xml"
+    "test": "vendor/bin/pest --colors=always --coverage-clover=coverage.xml",
+    "analyse": "vendor/bin/phpstan analyse --no-progress"
   },
   "config": {
     "sort-packages": true,

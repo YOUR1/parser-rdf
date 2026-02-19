@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+         xmlns:ex="http://example.org/">
+    <rdfs:Class rdf:about="http://example.org/Person">
+        <rdfs:label xml:lang="en">Person</rdfs:label>
+    </rdfs:Class>
+    <rdf:Property rdf:about="http://example.org/name">
+        <rdfs:label xml:lang="en">name</rdfs:label>
+        <rdfs:domain rdf:resource="http://example.org/Person"/>
+    </rdf:Property>
+</rdf:RDF>
