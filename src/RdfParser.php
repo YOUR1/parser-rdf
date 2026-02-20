@@ -64,7 +64,7 @@ class RdfParser implements OntologyParserInterface
             $handler = $this->getHandler($content, $options);
             $parsedRdf = $handler->parse($content);
 
-            return $this->buildParsedOntology($parsedRdf, $handler, $content);
+            return $this->buildParsedOntology($parsedRdf, $handler, $content, $options);
         } catch (FormatDetectionException $e) {
             throw $e;
         } catch (\Throwable $e) {
@@ -105,17 +105,52 @@ class RdfParser implements OntologyParserInterface
         array_unshift($this->handlers, $handler);
     }
 
-    protected function buildParsedOntology(ParsedRdf $parsedRdf, RdfFormatHandlerInterface $handler, string $content): ParsedOntology
+    /**
+     * @param array<string, string|int|bool|null> $options
+     */
+    protected function buildParsedOntology(ParsedRdf $parsedRdf, RdfFormatHandlerInterface $handler, string $content, array $options = []): ParsedOntology
     {
+        $includeSkolemized = (bool) ($options['includeSkolemizedBlankNodes'] ?? false);
+
         return new ParsedOntology(
-            classes: $this->extractClasses($parsedRdf),
-            properties: $this->extractProperties($parsedRdf),
+            classes: $this->extractClasses($parsedRdf, $includeSkolemized),
+            properties: $this->extractProperties($parsedRdf, $includeSkolemized),
             prefixes: $this->extractPrefixes($parsedRdf),
             shapes: $this->extractShapes($parsedRdf),
             restrictions: $this->extractRestrictions($parsedRdf),
             metadata: $this->buildMetadata($parsedRdf, $handler),
             rawContent: $content,
+            graphs: $this->buildGraphs($parsedRdf),
         );
+    }
+
+    /**
+     * Build the named graphs array from parsed RDF data.
+     *
+     * The primary ParsedRdf is stored under its graph URI, or '_:default' for the default graph.
+     * Handlers may provide additional named graphs via the 'additional_graphs' metadata key
+     * as an array<string, ParsedRdf>.
+     *
+     * @return array<string, ParsedRdf>
+     */
+    protected function buildGraphs(ParsedRdf $parsedRdf): array
+    {
+        /** @var string|null $graphUri EasyRdf\Graph::getUri() returns null for unnamed graphs despite PHPDoc */
+        $graphUri = $parsedRdf->graph->getUri();
+        $key = (\is_string($graphUri) && $graphUri !== '') ? $graphUri : '_:default';
+
+        $graphs = [$key => $parsedRdf];
+
+        if (isset($parsedRdf->metadata['additional_graphs']) && \is_array($parsedRdf->metadata['additional_graphs'])) {
+            foreach ($parsedRdf->metadata['additional_graphs'] as $uri => $candidate) {
+                if (!$candidate instanceof ParsedRdf) {
+                    continue;
+                }
+                $graphs[$uri] = $candidate;
+            }
+        }
+
+        return $graphs;
     }
 
     /**
@@ -131,9 +166,9 @@ class RdfParser implements OntologyParserInterface
     }
 
     /** @return array<string, array<string, mixed>> */
-    protected function extractClasses(ParsedRdf $parsedRdf): array
+    protected function extractClasses(ParsedRdf $parsedRdf, bool $includeSkolemizedBlankNodes = false): array
     {
-        $classes = $this->classExtractor->extract($parsedRdf);
+        $classes = $this->classExtractor->extract($parsedRdf, $includeSkolemizedBlankNodes);
         $result = [];
 
         foreach ($classes as $class) {
@@ -144,9 +179,9 @@ class RdfParser implements OntologyParserInterface
     }
 
     /** @return array<string, array<string, mixed>> */
-    protected function extractProperties(ParsedRdf $parsedRdf): array
+    protected function extractProperties(ParsedRdf $parsedRdf, bool $includeSkolemizedBlankNodes = false): array
     {
-        $properties = $this->propertyExtractor->extract($parsedRdf);
+        $properties = $this->propertyExtractor->extract($parsedRdf, $includeSkolemizedBlankNodes);
         $result = [];
 
         foreach ($properties as $property) {

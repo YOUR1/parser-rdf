@@ -28,6 +28,9 @@ final class ClassExtractor
     private const CLASS_TYPE_URIS = [
         'http://www.w3.org/2000/01/rdf-schema#Class',
         'http://www.w3.org/2002/07/owl#Class',
+        'http://www.w3.org/2000/01/rdf-schema#Datatype',
+        'http://www.w3.org/2000/01/rdf-schema#Container',
+        'http://www.w3.org/2000/01/rdf-schema#Literal',
     ];
 
     /**
@@ -39,7 +42,7 @@ final class ClassExtractor
      *
      * @return list<array<string, mixed>>
      */
-    public function extract(ParsedRdf $parsedRdf): array
+    public function extract(ParsedRdf $parsedRdf, bool $includeSkolemizedBlankNodes = false): array
     {
         if ($parsedRdf->format === 'rdf/xml' && isset($parsedRdf->metadata['xml_element'])) {
             $xmlElement = $parsedRdf->metadata['xml_element'];
@@ -48,7 +51,7 @@ final class ClassExtractor
             }
         }
 
-        return $this->extractFromGraph($parsedRdf->graph);
+        return $this->extractFromGraph($parsedRdf->graph, $includeSkolemizedBlankNodes);
     }
 
     /**
@@ -56,7 +59,7 @@ final class ClassExtractor
      *
      * @return list<array<string, mixed>>
      */
-    private function extractFromGraph(Graph $graph): array
+    private function extractFromGraph(Graph $graph, bool $includeSkolemizedBlankNodes = false): array
     {
         $classes = [];
 
@@ -65,8 +68,16 @@ final class ClassExtractor
         foreach ($classResources as $classResource) {
             $uri = $classResource->getUri();
 
-            // Skip blank nodes and anonymous class expressions
-            if (! $uri || $this->isBlankNode($classResource) || $this->isAnonymousOwlExpression($classResource)) {
+            if (! $uri) {
+                continue;
+            }
+
+            if ($this->isBlankNode($classResource)) {
+                if (!$includeSkolemizedBlankNodes) {
+                    continue;
+                }
+                $uri = 'urn:bnode:' . $uri;
+            } elseif ($this->isAnonymousOwlExpression($classResource)) {
                 continue;
             }
 
@@ -80,6 +91,8 @@ final class ClassExtractor
                 'metadata' => [
                     'source' => 'easyrdf',
                     'types' => $this->getResourceValues($classResource, 'rdf:type'),
+                    'see_also' => $this->getNamedResourceValues($classResource, 'rdfs:seeAlso'),
+                    'is_defined_by' => $this->getNamedResourceValues($classResource, 'rdfs:isDefinedBy'),
                     'annotations' => $this->extractCustomAnnotations($classResource),
                 ],
             ];

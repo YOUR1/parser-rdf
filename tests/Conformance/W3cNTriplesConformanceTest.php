@@ -11,26 +11,20 @@ use Youri\vandenBogert\Software\ParserRdf\Handlers\NTriplesHandler;
  * ===================
  * Source: W3C RDF 1.1 N-Triples Test Suite
  * URL: https://w3c.github.io/rdf-tests/rdf/rdf11/rdf-n-triples/
- * Date: 2026-02-19
+ * Date: 2026-02-20
  *
  * Total tests: 70
- * - Positive Syntax: 41 (39 pass, 2 skip, 0 fail)
- * - Negative Syntax: 29 (11 pass, 18 skip, 0 fail)
+ * - Positive Syntax: 41 (40 pass, 1 skip, 0 fail)
+ * - Negative Syntax: 29 (29 pass, 0 skip, 0 fail)
  *
- * Results: 50 pass, 20 skip, 0 fail
+ * Results: 69 pass, 1 skip, 0 fail
  *
- * Positive skips (2):
- *   - comment_following_triple: EasyRdf 1.1.1 cannot parse inline comments after triples
+ * Positive skips (1):
  *   - minimal_whitespace: EasyRdf 1.1.1 requires whitespace between triple components
  *
- * Negative skips (18):
- *   - nt-syntax-bad-uri-01..09 (9): EasyRdf does not validate IRI content or reject relative IRIs
- *   - nt-syntax-bad-bnode-01..02 (2): EasyRdf accepts colons in blank node labels
- *   - nt-syntax-bad-struct-01..02 (2): EasyRdf accepts objectList/predicateObjectList in N-Triples
- *   - nt-syntax-bad-lang-01 (1): EasyRdf accepts invalid language tags
- *   - nt-syntax-bad-esc-01..03 (3): EasyRdf does not validate string escape sequences
- *   - nt-syntax-bad-string-05 (1): EasyRdf accepts long double-quoted string literals
- *   Total negative skips: 18 (all due to EasyRdf's permissive N-Triples parser)
+ * Story 12.4 added pre-parse validation that catches all 18 previously-skipped
+ * negative syntax tests. Also fixed inline comment stripping so
+ * comment_following_triple now passes.
  */
 
 function ntriplesFixturePath(string $filename): string
@@ -107,7 +101,6 @@ describe('W3C N-Triples Positive Syntax Tests', function () {
     ];
 
     $skippedPositive = [
-        'comment_following_triple' => 'EasyRdf 1.1.1 cannot parse inline comments after triples',
         'minimal_whitespace' => 'EasyRdf 1.1.1 requires whitespace between triple components',
     ];
 
@@ -165,24 +158,7 @@ describe('W3C N-Triples Negative Syntax Tests', function () {
     ];
 
     $skippedNegative = [
-        'nt-syntax-bad-uri-01' => 'EasyRdf 1.1.1 does not validate IRI content (accepts spaces)',
-        'nt-syntax-bad-uri-02' => 'EasyRdf 1.1.1 does not validate IRI escape sequences',
-        'nt-syntax-bad-uri-03' => 'EasyRdf 1.1.1 does not validate IRI long escape sequences',
-        'nt-syntax-bad-uri-04' => 'EasyRdf 1.1.1 does not reject character escapes in IRIs',
-        'nt-syntax-bad-uri-05' => 'EasyRdf 1.1.1 does not reject character escapes in IRIs',
-        'nt-syntax-bad-uri-06' => 'EasyRdf 1.1.1 does not reject relative IRIs in subject',
-        'nt-syntax-bad-uri-07' => 'EasyRdf 1.1.1 does not reject relative IRIs in predicate',
-        'nt-syntax-bad-uri-08' => 'EasyRdf 1.1.1 does not reject relative IRIs in object',
-        'nt-syntax-bad-uri-09' => 'EasyRdf 1.1.1 does not reject relative IRIs in datatype',
-        'nt-syntax-bad-bnode-01' => 'EasyRdf 1.1.1 accepts colons in blank node labels',
-        'nt-syntax-bad-bnode-02' => 'EasyRdf 1.1.1 accepts colons in blank node labels',
-        'nt-syntax-bad-struct-01' => 'EasyRdf 1.1.1 accepts objectList syntax in N-Triples',
-        'nt-syntax-bad-struct-02' => 'EasyRdf 1.1.1 accepts predicateObjectList syntax in N-Triples',
-        'nt-syntax-bad-lang-01' => 'EasyRdf 1.1.1 accepts invalid language tags',
-        'nt-syntax-bad-esc-01' => 'EasyRdf 1.1.1 does not validate string escape sequences',
-        'nt-syntax-bad-esc-02' => 'EasyRdf 1.1.1 does not validate string escape sequences',
-        'nt-syntax-bad-esc-03' => 'EasyRdf 1.1.1 does not validate string escape sequences',
-        'nt-syntax-bad-string-05' => 'EasyRdf 1.1.1 accepts long double-quoted string literals in N-Triples',
+        // All 18 previously-skipped tests now pass via pre-parse validation (Story 12.4)
     ];
 
     foreach ($negativeSyntaxTests as $testId => $filename) {

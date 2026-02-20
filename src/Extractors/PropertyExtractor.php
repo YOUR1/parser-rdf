@@ -42,7 +42,7 @@ final class PropertyExtractor
      *
      * @return list<array<string, mixed>>
      */
-    public function extract(ParsedRdf $parsedRdf): array
+    public function extract(ParsedRdf $parsedRdf, bool $includeSkolemizedBlankNodes = false): array
     {
         if ($parsedRdf->format === 'rdf/xml' && isset($parsedRdf->metadata['xml_element'])) {
             $xmlElement = $parsedRdf->metadata['xml_element'];
@@ -51,13 +51,13 @@ final class PropertyExtractor
             }
         }
 
-        return $this->extractFromGraph($parsedRdf->graph);
+        return $this->extractFromGraph($parsedRdf->graph, $includeSkolemizedBlankNodes);
     }
 
     /**
      * @return list<array<string, mixed>>
      */
-    private function extractFromGraph(Graph $graph): array
+    private function extractFromGraph(Graph $graph, bool $includeSkolemizedBlankNodes = false): array
     {
         $properties = [];
 
@@ -66,7 +66,16 @@ final class PropertyExtractor
         foreach ($propertyResources as $propertyResource) {
             $uri = $propertyResource->getUri();
 
-            if (! $uri || $this->isBlankNode($propertyResource) || $this->isAnonymousOwlExpression($propertyResource)) {
+            if (! $uri) {
+                continue;
+            }
+
+            if ($this->isBlankNode($propertyResource)) {
+                if (!$includeSkolemizedBlankNodes || $this->isAnonymousOwlExpression($propertyResource)) {
+                    continue;
+                }
+                $uri = 'urn:bnode:' . $uri;
+            } elseif ($this->isAnonymousOwlExpression($propertyResource)) {
                 continue;
             }
 
@@ -95,6 +104,8 @@ final class PropertyExtractor
                 'metadata' => [
                     'source' => 'easyrdf',
                     'types' => $types,
+                    'see_also' => $this->getNamedResourceValues($propertyResource, 'rdfs:seeAlso'),
+                    'is_defined_by' => $this->getNamedResourceValues($propertyResource, 'rdfs:isDefinedBy'),
                     'annotations' => $this->extractCustomAnnotations($propertyResource),
                 ],
             ];
